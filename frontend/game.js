@@ -99,7 +99,7 @@ async function loadGame() {
 
   if (result.status === "ok") {
     activeCharacter = result.karakter;
-    generateRandomMap(); 
+    generateRandomMap();
     renderMap();
     updateGameUI();
     document.getElementById("login").style.display = "none";
@@ -126,6 +126,8 @@ function updateGameUI() {
       `Gyűjtő Skill: ${activeCharacter.gyujto_skill}\n` +
       `Harc Skill: ${activeCharacter.harc_skill}\n` +
       `Pozíció: (${activeCharacter.pos_x}, ${activeCharacter.pos_y})`;
+
+    updateInventoryDisplay();
 
     // Megjelenítjük a skill kiosztó felületet, ha van pont
     updateSkillAllocationUI(activeCharacter.skill_pontok);
@@ -258,37 +260,70 @@ function toggleActivityButtons(disable) {
 // game.js
 async function moveCharacter(deltaX, deltaY) {
   if (!activeCharacter) return;
-  
+
   toggleActivityButtons(true);
-  
-  const result = await callApi('move_character', { 
-      nev: activeCharacter.nev,
-      delta_x: deltaX,
-      delta_y: deltaY
+
+  const result = await callApi("move_character", {
+    nev: activeCharacter.nev,
+    delta_x: deltaX,
+    delta_y: deltaY,
   });
 
-  if (result.status === 'ok') {
-      activeCharacter = result.karakter;
-      
-      // Frissítjük a kijelzőt és a térképet
-      updateGameUI();
-      renderMap(); 
-      
-      // Mivel új helyre érkeztünk, az adott cella típusa is kell:
-      const currentTileType = currentMap[activeCharacter.pos_y][activeCharacter.pos_x];
-      addToLog(result.message + ` Az aktuális cella: **${currentTileType}**.`);
-      
-      // Itt lehetne ellenőrizni, hogy a cella nem járható (pl. víz)
-      if (currentTileType === 'viz') {
-           addToLog('Figyelem: Ezt a cellát nem járhatod át!');
-           // Később ezt a logikát a PHP-ban is ellenőrizni kell, 
-           // és vissza kell vonni a mozgást, ha nem járható.
-      }
+  if (result.status === "ok") {
+    activeCharacter = result.karakter;
+
+    // Frissítjük a kijelzőt és a térképet
+    updateGameUI();
+    renderMap();
+
+    // Mivel új helyre érkeztünk, az adott cella típusa is kell:
+    const currentTileType =
+      currentMap[activeCharacter.pos_y][activeCharacter.pos_x];
+    addToLog(result.message + ` Az aktuális cella: **${currentTileType}**.`);
+
+    // Itt lehetne ellenőrizni, hogy a cella nem járható (pl. víz)
+    if (currentTileType === "viz") {
+      addToLog("Figyelem: Ezt a cellát nem járhatod át!");
+      // Később ezt a logikát a PHP-ban is ellenőrizni kell,
+      // és vissza kell vonni a mozgást, ha nem járható.
+    }
   } else {
-      addToLog(`Hiba a mozgáskor: ${result.message}`);
+    addToLog(`Hiba a mozgáskor: ${result.message}`);
   }
-  
+
   toggleActivityButtons(false);
 }
 
+function updateInventoryDisplay() {
+  // Használjuk az új ID-t a MODÁLON belül: 'inventoryDisplayContent'
+  const invDiv = document.getElementById('inventoryDisplayContent');
+  let invText = '';
+  
+  const inventory = activeCharacter.inventory;
+  const items = Object.keys(inventory);
 
+  if (items.length > 0) {
+      items.forEach(item => {
+          if (inventory[item] > 0) {
+              invText += `${item}: ${inventory[item]} db\n`;
+          }
+      });
+  } else {
+      invText = 'A készleted üres.';
+  }
+  
+  invDiv.textContent = invText;
+}
+
+function toggleInventoryModal() {
+  const modal = document.getElementById('inventoryModal');
+  
+  if (modal.style.display === 'block') {
+      // Elrejtés
+      modal.style.display = 'none';
+  } else {
+      // Megjelenítés és a tartalom frissítése (ha szükséges)
+      updateInventoryDisplay(); // Biztosítjuk, hogy a legfrissebb adatok jelenjenek meg
+      modal.style.display = 'block';
+  }
+}

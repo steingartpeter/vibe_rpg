@@ -36,7 +36,7 @@ switch ($action) {
     $delta_x = $input['delta_x'] ?? 0;
     $delta_y = $input['delta_y'] ?? 0;
     $nev = $input['nev'] ?? '';
-    $response = moveCharacter($pdo, $nev, (int)$delta_x, (int)$delta_y); 
+    $response = moveCharacter($pdo, $nev, (int)$delta_x, (int)$delta_y);
     break;
   default:
     $response = ['status' => 'error', 'message' => 'Érvénytelen akció.'];
@@ -57,6 +57,11 @@ function loadCharacter(PDO $pdo, string $nev): array
   $karakter = $stmt->fetch();
 
   if ($karakter) {
+    // 2. Inventory lekérése a karakter ID alapján
+    $karakter['inventory'] = getInventory($pdo, $karakter['id']);
+
+    // Fontos: Az ID-t ne küldjük vissza a frontendre, ha nem muszáj.
+    unset($karakter['id']);
     return ['status' => 'ok', 'karakter' => $karakter];
   } else {
     return ['status' => 'error', 'message' => 'A megadott nevű karakter nem található.'];
@@ -70,6 +75,10 @@ function doActivity(PDO $pdo, string $nev, string $type): array
   if ($charResult['status'] !== 'ok') {
     return ['status' => 'error', 'message' => 'Karakter nem található.'];
   }
+  // Ezt kell megtenned, mivel a loadCharacter eltávolítja az ID-t a visszatérés előtt, 
+  // de az adatbázishoz mégis szükségünk van rá:
+  $temp_char_id = $charResult['karakter']['id'];
+  $char = $charResult['karakter'];
   $char = $charResult['karakter'];
 
   // 2. Energia ellenőrzés
@@ -81,8 +90,13 @@ function doActivity(PDO $pdo, string $nev, string $type): array
   // 3. Tevékenység végrehajtása (egyszerű logika)
   $xp_nyerese = 0;
   $log_message = '';
+  $nyersanyag_nev = null;
+  $nyersanyag_mennyiseg = 0;
 
   if ($type === 'collect') {
+    // Példa: Minden gyűjtés ad 1-3 nyersanyagot
+    $nyersanyag_mennyiseg = rand(1, 3);
+    $nyersanyag_nev = "Fa"; // Később ezt a cellatípushoz kötjük!
     // Gyűjtés: XP nyerés a skill szint alapján
     $xp_nyerese = $char['gyujto_skill'] * 2;
     $log_message = "Sikeresen gyűjtöttél nyersanyagot. ";
@@ -100,6 +114,19 @@ function doActivity(PDO $pdo, string $nev, string $type): array
     $xp_nyerese = 0;
   } else {
     return ['status' => 'error', 'message' => 'Ismeretlen tevékenység típus.'];
+  }
+
+  // ÚJ LOGIKA: Inventory frissítése a gyűjtés után
+  if ($nyersanyag_mennyiseg > 0 && $nyersanyag_nev !== null) {
+    // 1. Inventory frissítése az adatbázisban
+    updateInventory($pdo, $charResult['karakter']['id'], $nyersanyag_nev, $nyersanyag_mennyiseg);
+    $log_message .= " +{$nyersanyag_mennyiseg} {$nyersanyag_nev} gyűjtve!";
+
+    // 2. Frissítjük a karakter objektumot is, hogy visszaküldjük a frontendnek
+    if (!isset($char['inventory'][$nyersanyag_nev])) {
+      $char['inventory'][$nyersanyag_nev] = 0;
+    }
+    $char['inventory'][$nyersanyag_nev] += $nyersanyag_mennyiseg;
   }
 
   // 4. Statisztikák frissítése
@@ -190,36 +217,72 @@ function allocateSkillPoint(PDO $pdo, string $nev, string $skill_type): array
 }
 
 // api.php - az API fájl aljára
-function moveCharacter(PDO $pdo, string $nev, int $delta_x, int $delta_y): array {
+function moveCharacter(PDO $pdo, string $nev, int $delta_x, int $delta_y): array
+{
   $charResult = loadCharacter($pdo, $nev);
   if ($charResult['status'] !== 'ok') {
-      return ['status' => 'error', 'message' => 'Karakter nem található.'];
+    return ['status' => 'error', 'message' => 'Karakter nem található.'];
   }
   $char = $charResult['karakter'];
 
   $new_x = $char['pos_x'] + $delta_x;
   $new_y = $char['pos_y'] + $delta_y;
-  
+
   // Alapvető határ ellenőrzés (12x12)
   if ($new_x < 0 || $new_x >= 12 || $new_y < 0 || $new_y >= 12) {
-      return ['status' => 'error', 'message' => 'Nem mehetsz ki a térkép határán!'];
+    return ['status' => 'error', 'message' => 'Nem mehetsz ki a térkép határán!'];
   }
 
   // 2. Adatbázis frissítése (mentés)
   $sql_update = "UPDATE karakter SET pos_x = :x, pos_y = :y WHERE nev = :nev";
   $stmt_update = $pdo->prepare($sql_update);
   $stmt_update->execute([
-      ':x' => $new_x,
-      ':y' => $new_y,
-      ':nev' => $nev
+    ':x' => $new_x,
+    ':y' => $new_y,
+    ':nev' => $nev
   ]);
 
   $char['pos_x'] = $new_x;
   $char['pos_y'] = $new_y;
-  
+
   return [
-      'status' => 'ok', 
-      'karakter' => $char, 
-      'message' => "Sikeres mozgás a(z) ({$new_x}, {$new_y}) koordinátára."
+    'status' => 'ok',
+    'karakter' => $char,
+    'message' => "Sikeres mozgás a(z) ({$new_x}, {$new_y}) koordinátára."
   ];
+}
+
+// api.php
+function getInventory(PDO $pdo, int $karakter_id): array
+{
+  $sql = "SELECT targy_nev, mennyiseg FROM inventory WHERE karakter_id = :id AND mennyiseg > 0";
+  $stmt = $pdo->prepare($sql);
+  $stmt->bindParam(':id', $karakter_id, PDO::PARAM_INT);
+  $stmt->execute();
+
+  // Asszociatív tömbbé alakítjuk: ['Fa' => 15, 'Kő' => 5]
+  $inventory = [];
+  while ($row = $stmt->fetch()) {
+    $inventory[$row['targy_nev']] = (int)$row['mennyiseg'];
+  }
+  return $inventory;
+}
+
+/**
+ * Növeli a tárgy mennyiségét, ha van, vagy beszúr egy új sort, ha nincs.
+ * Ezt nevezik UPSERT műveletnek.
+ */
+function updateInventory(PDO $pdo, int $karakter_id, string $targy_nev, int $mennyiseg): void
+{
+  $sql = "INSERT INTO inventory (karakter_id, targy_nev, mennyiseg) 
+          VALUES (:karakter_id, :targy_nev, :mennyiseg)
+          ON DUPLICATE KEY UPDATE mennyiseg = mennyiseg + :mennyiseg";
+  // Ha már létezik a bejegyzés (PRIMARY KEY konfliktus), frissítjük a mennyiséget
+
+  $stmt = $pdo->prepare($sql);
+  $stmt->execute([
+    ':karakter_id' => $karakter_id,
+    ':targy_nev' => $targy_nev,
+    ':mennyiseg' => $mennyiseg
+  ]);
 }

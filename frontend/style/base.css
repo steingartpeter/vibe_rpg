@@ -58,3 +58,41 @@ width: 360px;
 height: 360px;
 margin-bottom: 20px;
 }
+/* game.html, a <style> tagban */
+.modal {
+  display: none; /* Alapértelmezetten rejtett */
+  position: fixed; /* Fix pozícióban van a képernyőn */
+  z-index: 1; /* A többi tartalom fölött jelenjen meg */
+  left: 0;
+  top: 0;
+  width: 100%; /* Teljes képernyő szélesség */
+  height: 100%; /* Teljes képernyő magasság */
+  overflow: auto; /* Görgetés, ha szükséges */
+  background-color: rgba(0,0,0,0.4); /* Félátlátszó fekete háttér */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% fentről, középre igazítva */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Szélesség (beállítható) */
+  max-width: 600px; /* Max. szélesség, hogy ne legyen túl nagy */
+  border-radius: 8px;
+  position: relative;
+}
+
+.close-button {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.close-button:hover,
+.close-button:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}

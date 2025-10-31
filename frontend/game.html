@@ -45,12 +45,16 @@
             </div>
             <div id="tev-container">
               <h2>Tevékenységek</h2>
-              <button onclick="doActivity('collect')">Nyersanyag Gyűjtés</button>
+              <button onclick="doActivity('collect')">
+                Nyersanyag Gyűjtés
+              </button>
               <button onclick="doActivity('combat')">Harcolj</button>
               <button onclick="doActivity('rest')">Pihenj</button>
               <h2>Mozgás</h2>
               <div id="mvmnt-container">
-                <button onclick="moveCharacter(0, -1)" style="margin-left: 60px">
+                <button
+                  onclick="moveCharacter(0, -1)"
+                  style="margin-left: 60px">
                   Fel (↑)
                 </button>
                 <br />
@@ -68,6 +72,13 @@
             </div>
           </div>
           <div id="game-screen-right">
+            <div id="invtnry-container">
+              <div style="margin-bottom: 20px">
+                <button onclick="toggleInventoryModal()">
+                  Készlet (Inventory)
+                </button>
+              </div>
+            </div>
             <div id="log-container">
               <h2>Eseménynapló</h2>
               <div id="log"></div>
@@ -76,7 +87,15 @@
         </div>
       </div>
     </main>
-
+    <div id="inventoryModal" class="modal">
+      <div class="modal-content">
+        <span class="close-button" onclick="toggleInventoryModal()">
+          &times;
+        </span>
+        <h3>Karakter Készlet</h3>
+        <pre id="inventoryDisplayContent"></pre>
+      </div>
+    </div>
     <script src="game.js"></script>
   </body>
 </html>
