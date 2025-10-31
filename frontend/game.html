@@ -17,20 +17,63 @@
       </div>
 
       <div id="game" style="display: none">
-        <h2>Karakter Statisztikák</h2>
-        <pre id="stats"></pre>
-        <div id="skillAllocation" style="display: none; border: 1px solid gold; padding: 10px; margin-bottom: 20px">
-          <h3>Skill Pont Kiosztás (Skill Pontok: <span id="skillPointsRemaining">0</span>)</h3>
-          <button onclick="allocatePoint('gyujto')">Fejlessz Gyűjtő Skillt</button>
-          <button onclick="allocatePoint('harc')">Fejlessz Harc Skillt</button>
+        <div id="game-screen">
+          <div id="game-screen-left">
+            <div id="char-stat-container">
+              <h2>Karakter Statisztikák</h2>
+              <pre id="stats"></pre>
+              <div
+                id="skillAllocation"
+                style="
+                  display: none;
+                  border: 1px solid gold;
+                  padding: 10px;
+                  margin-bottom: 20px;
+                ">
+                <h3>
+                  Skill Pont Kiosztás (Skill Pontok:
+                  <span id="skillPointsRemaining">0</span>
+                  )
+                </h3>
+                <button onclick="allocatePoint('gyujto')">
+                  Fejlessz Gyűjtő Skillt
+                </button>
+                <button onclick="allocatePoint('harc')">
+                  Fejlessz Harc Skillt
+                </button>
+              </div>
+            </div>
+            <div id="tev-container">
+              <h2>Tevékenységek</h2>
+              <button onclick="doActivity('collect')">Nyersanyag Gyűjtés</button>
+              <button onclick="doActivity('combat')">Harcolj</button>
+              <button onclick="doActivity('rest')">Pihenj</button>
+              <h2>Mozgás</h2>
+              <div id="mvmnt-container">
+                <button onclick="moveCharacter(0, -1)" style="margin-left: 60px">
+                  Fel (↑)
+                </button>
+                <br />
+                <button onclick="moveCharacter(-1, 0)">Bal (←)</button>
+                <button onclick="moveCharacter(1, 0)">Jobb (→)</button>
+                <br />
+                <button onclick="moveCharacter(0, 1)" style="margin-left: 60px">
+                  Le (↓)
+                </button>
+              </div>
+            </div>
+            <div id="map-container">
+              <h2>Térkép (12x12)</h2>
+              <div id="main-map"></div>
+            </div>
+          </div>
+          <div id="game-screen-right">
+            <div id="log-container">
+              <h2>Eseménynapló</h2>
+              <div id="log"></div>
+            </div>
+          </div>
         </div>
-        <h2>Tevékenységek</h2>
-        <button onclick="doActivity('collect')">Nyersanyag Gyűjtés</button>
-        <button onclick="doActivity('combat')">Harcolj</button>
-        <button onclick="doActivity('rest')">Pihenj</button>
-
-        <h2>Eseménynapló</h2>
-        <div id="log"></div>
       </div>
     </main>
 

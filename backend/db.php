@@ -1,9 +1,15 @@
 <?php
 
-// 1. ADATBÁZIS BEÁLLÍTÁSOK
+// 1. ADATBÁZIS BEÁLLÍTÁSOK - HOME
+// define('DB_HOST', 'localhost'); // Valószínűleg localhost, ha helyben futtatod
+// define('DB_USER', 'ax07057');
+// define('DB_PASS', 'an003722');
+// define('DB_NAME', 'vibe_rpg');
+
+// 1. ADATBÁZIS BEÁLLÍTÁSOK - OFFICE
 define('DB_HOST', 'localhost'); // Valószínűleg localhost, ha helyben futtatod
 define('DB_USER', 'ax07057');
-define('DB_PASS', 'an003722');
+define('DB_PASS', '262714Hw0809');
 define('DB_NAME', 'vibe_rpg');
 
 // 2. PDO KAPCSOLAT LÉTREHOZÁSA

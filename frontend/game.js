@@ -1,6 +1,68 @@
 const API_URL = "/vibe_rpg/backend/api.php"; // A PHP API végpontod elérési útja
 let activeCharacter = null;
 
+const MAP_SIZE = 12; // 12x12-es térkép
+const TILE_TYPES = {
+  erdo: { color: "#228B22", resource: "Fa", combat_chance: 30 },
+  mezo: { color: "#8FBC8F", resource: "Gyógynövény", combat_chance: 15 },
+  homok: { color: "#F0E68C", resource: "Kavics", combat_chance: 5 },
+  tisztas: { color: "#90EE90", resource: "Bogyó", combat_chance: 10 },
+  sziklas: { color: "#A9A9A9", resource: "Kő", combat_chance: 40 },
+  mocsár: { color: "#556B2F", resource: "Iszap", combat_chance: 50 },
+  viz: { color: "#4682B4", resource: null, combat_chance: 0 }, // Nem járható
+};
+const TILE_KEYS = Object.keys(TILE_TYPES); // ['erdo', 'mezo', ...]
+
+let currentMap = [];
+
+function generateRandomMap() {
+  let map = [];
+  for (let y = 0; y < MAP_SIZE; y++) {
+    let row = [];
+    for (let x = 0; x < MAP_SIZE; x++) {
+      // Véletlen cellatípus kiválasztása
+      const randomType =
+        TILE_KEYS[Math.floor(Math.random() * TILE_KEYS.length)];
+      row.push(randomType);
+    }
+    map.push(row);
+  }
+  // A kezdőcella mindig 'tisztás' legyen a biztonság kedvéért (pl. [0, 0])
+  map[activeCharacter.pos_y][activeCharacter.pos_x] = "tisztas";
+  currentMap = map;
+}
+
+function renderMap() {
+  const container = document.getElementById("main-map");
+  container.innerHTML = ""; // Előző térkép törlése
+
+  currentMap.forEach((row, y) => {
+    row.forEach((type, x) => {
+      const cell = document.createElement("div");
+      cell.className = "map-cell";
+
+      // CSS beállítás a TILE_TYPES alapján
+      cell.style.backgroundColor = TILE_TYPES[type].color;
+      cell.style.width = "30px";
+      cell.style.height = "30px";
+
+      // Karakter ikon megjelenítése
+      if (activeCharacter.pos_x === x && activeCharacter.pos_y === y) {
+        cell.textContent = "🚶"; // Karakter ikon
+        cell.style.fontSize = "20px";
+        cell.style.textAlign = "center";
+      }
+
+      // Járhatóság jelzése (pl. víz)
+      if (type === "viz") {
+        cell.style.opacity = 0.5;
+      }
+
+      container.appendChild(cell);
+    });
+  });
+}
+
 // 1. API hívás funkció (változatlan)
 async function callApi(action, data = {}) {
   const payload = { action, ...data };
@@ -11,10 +73,12 @@ async function callApi(action, data = {}) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+    console.log(response);
     return response.json();
   } catch (error) {
     console.error("API hiba:", error);
-    document.getElementById("message").textContent = "Kommunikációs hiba a szerverrel.";
+    document.getElementById("message").textContent =
+      "Kommunikációs hiba a szerverrel.";
     return { status: "error", message: "Hálózati hiba." };
   }
 }
@@ -23,7 +87,8 @@ async function callApi(action, data = {}) {
 async function loadGame() {
   const nev = document.getElementById("characterName").value.trim();
   if (!nev) {
-    document.getElementById("message").textContent = "Kérlek adj meg egy nevet.";
+    document.getElementById("message").textContent =
+      "Kérlek adj meg egy nevet.";
     return;
   }
 
@@ -34,10 +99,14 @@ async function loadGame() {
 
   if (result.status === "ok") {
     activeCharacter = result.karakter;
+    generateRandomMap(); 
+    renderMap();
     updateGameUI();
     document.getElementById("login").style.display = "none";
     document.getElementById("game").style.display = "block";
-    addToLog(`Üdvözöllek ${activeCharacter.nev}! Sikeresen betöltve. Energia: ${activeCharacter.energia}.`);
+    addToLog(
+      `Üdvözöllek ${activeCharacter.nev}! Sikeresen betöltve. Energia: ${activeCharacter.energia}.`
+    );
   } else {
     document.getElementById("message").textContent = result.message;
   }
@@ -66,13 +135,15 @@ function updateGameUI() {
 // 4. Eseménynaplóhoz adás (változatlan)
 function addToLog(text) {
   const logDiv = document.getElementById("log");
-  logDiv.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${text}</div>` + logDiv.innerHTML;
+  logDiv.innerHTML =
+    `<div>[${new Date().toLocaleTimeString()}] ${text}</div>` +
+    logDiv.innerHTML;
 }
 
 // 5. TEVÉKENYSÉG INDÍTÁSA (FRISSÍTÉS!)
 async function doActivity(type) {
   if (!activeCharacter) return;
-
+  console.log("ACTIVITY: " + type);
   // A gombokat letiltjuk, amíg a kérésre várunk
   toggleActivityButtons(true);
 
@@ -111,16 +182,21 @@ function checkLevelUp(newLevel) {
   // Ha az XP meghalad egy bizonyos küszöböt, a szerver növeli a szintet.
   // Tegyük fel, hogy a szerver már megnövelte a szintet, és mi csak ellenőrizzük.
   if (newLevel > currentLevel) {
-    addToLog(`*** GRATULÁLOK! ${activeCharacter.nev} szintet lépett! Új szint: ${newLevel} ***`);
+    addToLog(
+      `*** GRATULÁLOK! ${activeCharacter.nev} szintet lépett! Új szint: ${newLevel} ***`
+    );
     // Itt jönne a pontelosztás UI, amit később hozzáadhatunk
   }
 }
 
 // 7. Gombok letiltása/engedélyezése a kérés ideje alatt
 function toggleActivityButtons(disable) {
-  document.querySelector("button[onclick=\"doActivity('collect')\"]").disabled = disable;
-  document.querySelector("button[onclick=\"doActivity('combat')\"]").disabled = disable;
-  document.querySelector("button[onclick=\"doActivity('rest')\"]").disabled = disable;
+  document.querySelector("button[onclick=\"doActivity('collect')\"]").disabled =
+    disable;
+  document.querySelector("button[onclick=\"doActivity('combat')\"]").disabled =
+    disable;
+  document.querySelector("button[onclick=\"doActivity('rest')\"]").disabled =
+    disable;
 }
 
 // game.js - a többi függvény után
@@ -164,14 +240,55 @@ async function allocatePoint(skillType) {
 // Bővítsd ki a toggleActivityButtons függvényt, hogy a skill gombokat is kezelje
 function toggleActivityButtons(disable) {
   // ... meglévő aktivitás gombok letiltása
-  document.querySelector("button[onclick=\"doActivity('collect')\"]").disabled = disable;
-  document.querySelector("button[onclick=\"doActivity('combat')\"]").disabled = disable;
-  document.querySelector("button[onclick=\"doActivity('rest')\"]").disabled = disable;
+  document.querySelector("button[onclick=\"doActivity('collect')\"]").disabled =
+    disable;
+  document.querySelector("button[onclick=\"doActivity('combat')\"]").disabled =
+    disable;
+  document.querySelector("button[onclick=\"doActivity('rest')\"]").disabled =
+    disable;
 
   // ÚJ: Skill kiosztó gombok letiltása is
-  document.querySelector("button[onclick=\"allocatePoint('gyujto')\"]").disabled = disable;
-  document.querySelector("button[onclick=\"allocatePoint('harc')\"]").disabled = disable;
+  document.querySelector(
+    "button[onclick=\"allocatePoint('gyujto')\"]"
+  ).disabled = disable;
+  document.querySelector("button[onclick=\"allocatePoint('harc')\"]").disabled =
+    disable;
 }
 
-// Megjegyzés: A szintlépéshez szükséges XP kiszámítását és az adatbázis frissítését
-// mindenképpen a BIZTONSÁGOS PHP oldalon kell implementálni!
+// game.js
+async function moveCharacter(deltaX, deltaY) {
+  if (!activeCharacter) return;
+  
+  toggleActivityButtons(true);
+  
+  const result = await callApi('move_character', { 
+      nev: activeCharacter.nev,
+      delta_x: deltaX,
+      delta_y: deltaY
+  });
+
+  if (result.status === 'ok') {
+      activeCharacter = result.karakter;
+      
+      // Frissítjük a kijelzőt és a térképet
+      updateGameUI();
+      renderMap(); 
+      
+      // Mivel új helyre érkeztünk, az adott cella típusa is kell:
+      const currentTileType = currentMap[activeCharacter.pos_y][activeCharacter.pos_x];
+      addToLog(result.message + ` Az aktuális cella: **${currentTileType}**.`);
+      
+      // Itt lehetne ellenőrizni, hogy a cella nem járható (pl. víz)
+      if (currentTileType === 'viz') {
+           addToLog('Figyelem: Ezt a cellát nem járhatod át!');
+           // Később ezt a logikát a PHP-ban is ellenőrizni kell, 
+           // és vissza kell vonni a mozgást, ha nem járható.
+      }
+  } else {
+      addToLog(`Hiba a mozgáskor: ${result.message}`);
+  }
+  
+  toggleActivityButtons(false);
+}
+
+

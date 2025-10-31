@@ -23,7 +23,12 @@
   overflow-y: scroll;
 }
 button {
-  background: linear-gradient(45deg, rgba(42, 123, 155, 1) 0%, rgb(70, 104, 100) 50%, rgba(80, 92, 128, 1) 100%);
+  background: linear-gradient(
+    45deg,
+    rgba(42, 123, 155, 1) 0%,
+    rgb(70, 104, 100) 50%,
+    rgba(80, 92, 128, 1) 100%
+  );
   margin: 4px 6px;
   padding: 4px 8px;
   cursor: pointer;
@@ -32,4 +37,24 @@ button {
 button:hover {
   border: 2px solid #fabe00;
   box-shadow: 4px 4px 8px #000;
+}
+#game-screen-left,#game-screen-right {
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+  margin: 12px;
+  padding: 6px;
+}
+
+#game-screen{
+  display:flex; 
+  justify-content: space-between;
+}
+#main-map {
+display: grid;
+grid-template-columns: repeat(12, 1fr);
+gap: 1px;
+width: 360px;
+height: 360px;
+margin-bottom: 20px;
 }

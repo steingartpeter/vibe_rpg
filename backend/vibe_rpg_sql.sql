@@ -39,3 +39,12 @@ CREATE TABLE terkep_cella (
 
 ALTER TABLE karakter
 ADD skill_pontok INT(11) NOT NULL DEFAULT 0;
+
+CREATE TABLE vibe_rpg.inventory (
+    karakter_id INT(11) NOT NULL,
+    targy_nev VARCHAR(100) NOT NULL,
+    mennyiseg INT(11) NOT NULL DEFAULT 0,
+    
+    PRIMARY KEY (karakter_id, targy_nev), -- Egy karakternek csak egy bejegyzése lehet egy adott tárgyra
+    FOREIGN KEY (karakter_id) REFERENCES karakter(id) ON DELETE CASCADE
+);

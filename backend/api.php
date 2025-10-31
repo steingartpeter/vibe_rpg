@@ -32,6 +32,12 @@ switch ($action) {
     $nev = $input['nev'] ?? '';
     $response = allocateSkillPoint($pdo, $nev, $skill_type);
     break;
+  case 'move_character':
+    $delta_x = $input['delta_x'] ?? 0;
+    $delta_y = $input['delta_y'] ?? 0;
+    $nev = $input['nev'] ?? '';
+    $response = moveCharacter($pdo, $nev, (int)$delta_x, (int)$delta_y); 
+    break;
   default:
     $response = ['status' => 'error', 'message' => 'Érvénytelen akció.'];
     break;
@@ -44,7 +50,7 @@ exit;
 // 4. KARAKTER BETÖLTÉSE FÜGGVÉNY
 function loadCharacter(PDO $pdo, string $nev): array
 {
-  $sql = "SELECT nev, szint, xp, gyujto_skill, harc_skill, energia, pos_x, pos_y FROM karakter WHERE nev = :nev";
+  $sql = "SELECT * FROM karakter WHERE nev = :nev";
   $stmt = $pdo->prepare($sql);
   $stmt->bindParam(':nev', $nev, PDO::PARAM_STR);
   $stmt->execute();
@@ -180,5 +186,40 @@ function allocateSkillPoint(PDO $pdo, string $nev, string $skill_type): array
     'status' => 'ok',
     'karakter' => $char,
     'message' => "Sikeresen elköltöttél egy pontot a(z) **{$skill_type}** skillre. Új szint: {$char[$target_skill]}."
+  ];
+}
+
+// api.php - az API fájl aljára
+function moveCharacter(PDO $pdo, string $nev, int $delta_x, int $delta_y): array {
+  $charResult = loadCharacter($pdo, $nev);
+  if ($charResult['status'] !== 'ok') {
+      return ['status' => 'error', 'message' => 'Karakter nem található.'];
+  }
+  $char = $charResult['karakter'];
+
+  $new_x = $char['pos_x'] + $delta_x;
+  $new_y = $char['pos_y'] + $delta_y;
+  
+  // Alapvető határ ellenőrzés (12x12)
+  if ($new_x < 0 || $new_x >= 12 || $new_y < 0 || $new_y >= 12) {
+      return ['status' => 'error', 'message' => 'Nem mehetsz ki a térkép határán!'];
+  }
+
+  // 2. Adatbázis frissítése (mentés)
+  $sql_update = "UPDATE karakter SET pos_x = :x, pos_y = :y WHERE nev = :nev";
+  $stmt_update = $pdo->prepare($sql_update);
+  $stmt_update->execute([
+      ':x' => $new_x,
+      ':y' => $new_y,
+      ':nev' => $nev
+  ]);
+
+  $char['pos_x'] = $new_x;
+  $char['pos_y'] = $new_y;
+  
+  return [
+      'status' => 'ok', 
+      'karakter' => $char, 
+      'message' => "Sikeres mozgás a(z) ({$new_x}, {$new_y}) koordinátára."
   ];
 }
