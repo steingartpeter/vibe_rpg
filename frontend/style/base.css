@@ -1,0 +1,35 @@
+* {
+  margin: 0;
+  box-sizing: border-box;
+  background-color: rgb(47, 67, 94);
+  color: #eeeeff;
+}
+.cntnr {
+  margin: 15px;
+  border: dotted 3px #fff;
+  padding: 8px;
+  min-height: 800px;
+  border-radius: 12px;
+}
+#stats,
+#log {
+  margin: 8px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+#log {
+  max-height: 500px;
+  overflow-y: scroll;
+}
+button {
+  background: linear-gradient(45deg, rgba(42, 123, 155, 1) 0%, rgb(70, 104, 100) 50%, rgba(80, 92, 128, 1) 100%);
+  margin: 4px 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+button:hover {
+  border: 2px solid #fabe00;
+  box-shadow: 4px 4px 8px #000;
+}

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="hu">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Egyszerű Web RPG</title>
+    <link rel="stylesheet" href="/vibe_rpg/frontend/style/base.css" />
+  </head>
+  <body>
+    <main class="cntnr">
+      <h1>Egyszerű RPG</h1>
+
+      <div id="login">
+        <h2>Karakter betöltése</h2>
+        <input type="text" id="characterName" placeholder="Karakter neve" />
+        <button onclick="loadGame()">Játék indítása</button>
+        <p id="message" style="color: red; background-color: beige"></p>
+      </div>
+
+      <div id="game" style="display: none">
+        <h2>Karakter Statisztikák</h2>
+        <pre id="stats"></pre>
+        <div id="skillAllocation" style="display: none; border: 1px solid gold; padding: 10px; margin-bottom: 20px">
+          <h3>Skill Pont Kiosztás (Skill Pontok: <span id="skillPointsRemaining">0</span>)</h3>
+          <button onclick="allocatePoint('gyujto')">Fejlessz Gyűjtő Skillt</button>
+          <button onclick="allocatePoint('harc')">Fejlessz Harc Skillt</button>
+        </div>
+        <h2>Tevékenységek</h2>
+        <button onclick="doActivity('collect')">Nyersanyag Gyűjtés</button>
+        <button onclick="doActivity('combat')">Harcolj</button>
+        <button onclick="doActivity('rest')">Pihenj</button>
+
+        <h2>Eseménynapló</h2>
+        <div id="log"></div>
+      </div>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
