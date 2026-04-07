@@ -96,3 +96,44 @@ margin-bottom: 20px;
   text-decoration: none;
   cursor: pointer;
 }
+.error-box-complex{
+  position: absolute;
+  top:255px;
+  left:200px;
+  padding:15px;
+  border:8px double #bb440d;
+  border-radius: 12px;
+  box-shadow: 6px 6px 12px #000;
+  background-color: #FABE99;
+  color:#992200;
+  cursor: pointer;
+}
+.error-header,.error-title{
+  background-color: #992200;
+}
+button.close-btn-red{
+  background-color: #EE3333;
+  background: #EE3333;
+}
+.error-header
+.error-body,
+.error-body,
+.error-footer{
+  padding:8px;
+  border-radius: 6px;
+  color:#CC2211;
+  background-color: #fdc8ba;
+}
+.error-msg-main{
+  color:#CC2211;
+  background-color: #fdc8ba;
+  font-size: 1.2em;
+}
+.error-debug-info{
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  background-color: #4b4b4b;
+  color:#fabe00;
+  padding:6px;
+  box-shadow: inset 4px 4px 6px #000;
+  border-radius: 4px;
+}

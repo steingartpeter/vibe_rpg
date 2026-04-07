@@ -1,46 +1,51 @@
 <?php
-require $_SERVER['DOCUMENT_ROOT'] . '/vibe_rpg/backend/functions.php'; // Függvények betöltése
-require $_SERVER['DOCUMENT_ROOT'] . '/vibe_rpg/backend/db.php'; // Adatbázis kapcsolat betöltése
-
-
 
 header('Content-Type: application/json'); // Minden válasz JSON formátumú lesz
 header('Access-Control-Allow-Origin: *'); // Fejlesztéshez engedélyezzük a CORS-t
 
-// 1. Kérés feldolgozása
-$input = json_decode(file_get_contents('php://input'), true);
-$action = $input['action'] ?? '';
-$nev = $input['nev'] ?? '';
+try {
+  // A require_once PHP 7+ alatt Error-t dob, ha a fájl nem található, amit a Throwable elkap
+  require_once $_SERVER['DOCUMENT_ROOT'] . '/vibe_rpg/backend/functions.php'; 
+  require_once $_SERVER['DOCUMENT_ROOT'] . '/vibe_rpg/backend/db.php'; 
 
-$response = ['status' => 'error', 'message' => 'Ismeretlen hiba történt.'];
+  // 1. Kérés feldolgozása
+  $input = json_decode(file_get_contents('php://input'), true);
+  $action = $input['action'] ?? '';
+  $nev = $input['nev'] ?? '';
 
-// 2. Akciók kezelése (SWITCH)
-switch ($action) {
-  case 'load_character':
-    $response = loadCharacter($pdo, $nev);
-    break;
+  $response = ['status' => 'error', 'message' => 'Ismeretlen hiba történt.'];
 
-  case 'do_activity':
-    $tevekenyseg = $input['type'] ?? ''; // Itt type van, mert a JS-ben is azt használtuk
-    $nev = $input['nev'] ?? '';
-    $response = doActivity($pdo, $nev, $tevekenyseg);
-    break;
+  // 2. Akciók kezelése (SWITCH)
+  switch ($action) {
+    case 'load_character':
+      $response = loadCharacter($pdo, $nev);
+      break;
 
-  // ... Később: save_character, rest, stb.
-  case 'allocate_skill_point':
-    $skill_type = $input['skill_type'] ?? '';
-    $nev = $input['nev'] ?? '';
-    $response = allocateSkillPoint($pdo, $nev, $skill_type);
-    break;
-  case 'move_character':
-    $delta_x = $input['delta_x'] ?? 0;
-    $delta_y = $input['delta_y'] ?? 0;
-    $nev = $input['nev'] ?? '';
-    $response = moveCharacter($pdo, $nev, (int)$delta_x, (int)$delta_y);
-    break;
-  default:
-    $response = ['status' => 'error', 'message' => 'Érvénytelen akció.'];
-    break;
+    case 'do_activity':
+      $tevekenyseg = $input['type'] ?? ''; 
+      $response = doActivity($pdo, $nev, $tevekenyseg);
+      break;
+    case 'allocate_skill_point':
+      $skill_type = $input['skill_type'] ?? '';
+      $response = allocateSkillPoint($pdo, $nev, $skill_type);
+      break;
+    case 'move_character':
+      $delta_x = $input['delta_x'] ?? 0;
+      $delta_y = $input['delta_y'] ?? 0;
+      $response = moveCharacter($pdo, $nev, (int)$delta_x, (int)$delta_y);
+      break;
+    default:
+      $response = ['status' => 'error', 'message' => 'Érvénytelen akció.'];
+      break;
+  }
+} catch (Throwable $e) {
+  // Bármilyen hiba esetén (PDOException, hiányzó fájl, Error) JSON választ küldünk
+  $response = [
+    'status' => 'error',
+    'message' => 'Szerveroldali hiba: ' . $e->getMessage(),
+    'file' => basename($e->getFile()),
+    'line' => $e->getLine()
+  ];
 }
 
 // 3. Válasz küldése a kliensnek

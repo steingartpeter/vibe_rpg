@@ -96,7 +96,7 @@ async function loadGame() {
   document.getElementById("message").textContent = "";
 
   const result = await callApi("load_character", { nev: nev });
-
+  console.table(result);
   if (result.status === "ok") {
     activeCharacter = result.karakter;
     generateRandomMap();
@@ -108,7 +108,8 @@ async function loadGame() {
       `Üdvözöllek ${activeCharacter.nev}! Sikeresen betöltve. Energia: ${activeCharacter.energia}.`
     );
   } else {
-    document.getElementById("message").textContent = result.message;
+    createErrorMessage(result);
+    //document.getElementById("#message").textContent = result.message;
   }
 }
 
@@ -326,4 +327,86 @@ function toggleInventoryModal() {
       updateInventoryDisplay(); // Biztosítjuk, hogy a legfrissebb adatok jelenjenek meg
       modal.style.display = 'block';
   }
+}
+
+
+
+
+/**
+ * Generates an HTML element based on a configuration object.
+ * @param {Object} config - The element configuration.
+ * @param {string} config.tag - The HTML tag name.
+ * @param {string[]} [config.classes] - Array of CSS classes.
+ * @param {string} [config.id] - The element ID.
+ * @param {string} [config.text] - Text content.
+ * @param {string} [config.value] - Value attribute.
+ * @param {Array<{type: string, handler: function}>} [config.events] - Array of event listeners.
+ * @returns {HTMLElement}
+ */
+function createUIElement({ tag, classes = [], id = '', text = '', value = '', events = []}) {
+    const el = document.createElement(tag);
+    if (id) el.id = id;
+    if (classes.length > 0) el.classList.add(...classes);
+    if (text) el.textContent = text;
+    if (value) el.setAttribute('value', value);
+    events.forEach(({ type, handler }) => {
+        if (type && typeof handler === 'function') {
+            el.addEventListener(type, handler);
+        }
+    });
+
+    return el;
+}
+
+/**
+ * Displays a formatted error message using the UI helper.
+ * @param {Object} errorObj - The error response from the server.
+ */
+function createErrorMessage(errorObj) {
+    const container = document.getElementById("message");
+    container.innerHTML = ""; // Clear previous messages
+    
+    // Common event handler to clear the entire message area
+    const clearHandler = () => { container.innerHTML = ""; };
+
+    // Main Wrapper
+    const errorBox = createUIElement({ tag: 'div', classes: ['error-box-complex'] });
+
+    // 1. Header: [Close Button] SERVER SIDE ERROR
+    const header = createUIElement({ tag: 'div', classes: ['error-header'] });
+    header.appendChild(createUIElement({
+        tag: 'button',
+        text: '✖',
+        classes: ['close-btn-red'],
+        events: [{ type: 'click', handler: clearHandler }]
+    }));
+    header.appendChild(createUIElement({ tag: 'span', text: ' SERVER SIDE ERROR', classes: ['error-title'] }));
+
+    // 2. Body: Message div and Debug div
+    const body = createUIElement({ tag: 'div', classes: ['error-body'] });
+    body.appendChild(createUIElement({ 
+        tag: 'div', 
+        classes: ['error-msg-main'], 
+        text: errorObj.message 
+    }));
+    
+    if (errorObj.file) {
+        body.appendChild(createUIElement({ 
+            tag: 'div', 
+            classes: ['error-debug-info'], 
+            text: `Source: ${errorObj.file} | Line: ${errorObj.line}` 
+        }));
+    }
+
+    // 3. Footer: DISMISS button
+    const footer = createUIElement({ tag: 'div', classes: ['error-footer'] });
+    footer.appendChild(createUIElement({
+        tag: 'button',
+        text: 'DISMISS',
+        classes: ['dismiss-btn'],
+        events: [{ type: 'click', handler: clearHandler }]
+    }));
+
+    errorBox.append(header, body, footer);
+    container.appendChild(errorBox);
 }
