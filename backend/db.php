@@ -20,8 +20,8 @@ try {
   // PDO opciók: hibakezelés és alapértelmezett beállítások
   $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION, // Hibát dobjon, ha gond van az SQL-lel
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,     // Alapértelmezett lekérdezési mód: asszociatív tömb
-    PDO::ATTR_EMULATE_PREPARES   => false,                // Valódi Prepared Statements használata
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,       // Alapértelmezett lekérdezési mód: asszociatív tömb
+    PDO::ATTR_EMULATE_PREPARES   => false,                  // Valódi Prepared Statements használata
   ];
 
   // A kapcsolat inicializálása
